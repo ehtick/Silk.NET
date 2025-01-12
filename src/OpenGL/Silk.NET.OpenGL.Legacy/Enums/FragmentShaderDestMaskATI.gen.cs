@@ -9,6 +9,7 @@ using Silk.NET.Core.Attributes;
 
 namespace Silk.NET.OpenGL.Legacy
 {
+    [Flags]
     [NativeName("Name", "FragmentShaderDestMaskATI")]
     public enum FragmentShaderDestMaskATI : int
     {
@@ -18,5 +19,7 @@ namespace Silk.NET.OpenGL.Legacy
         GreenBitAti = 0x2,
         [NativeName("Name", "GL_BLUE_BIT_ATI")]
         BlueBitAti = 0x4,
+        [NativeName("Name", "GL_NONE")]
+        None = 0x0,
     }
 }

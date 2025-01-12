@@ -26,11 +26,12 @@ namespace Silk.NET.Windowing.Internals
         protected ViewOptions _optionsCache;
 
         // Game loop fields
+        private readonly Stopwatch _lifetimeStopwatch = new Stopwatch();
         private readonly Stopwatch _renderStopwatch = new Stopwatch();
         private readonly Stopwatch _updateStopwatch = new Stopwatch();
-        private readonly Stopwatch _lifetimeStopwatch = new Stopwatch();
         private double _renderPeriod;
         private double _updatePeriod;
+        private bool _inRenderLoop;
 
         // Invocations
         private readonly ArrayPool<object> _returnArrayPool = ArrayPool<object>.Create();
@@ -38,7 +39,7 @@ namespace Silk.NET.Windowing.Internals
         private int _rented;
 
         // Ensure we keep SwapInterval up-to-date
-        private bool _swapIntervalChanged = true;
+        protected bool _swapIntervalChanged = true;
 
         /// <summary>
         /// Creates a base view with the given options.
@@ -70,6 +71,7 @@ namespace Silk.NET.Windowing.Internals
         public abstract void ContinueEvents();
         public abstract Vector2D<int> PointToClient(Vector2D<int> point);
         public abstract Vector2D<int> PointToScreen(Vector2D<int> point);
+        public abstract void Focus();
         public abstract void Close();
         protected abstract void RegisterCallbacks();
         protected abstract void UnregisterCallbacks();
@@ -109,6 +111,11 @@ namespace Silk.NET.Windowing.Internals
 
         public void Reset()
         {
+            if (_inRenderLoop)
+            {
+                throw new InvalidOperationException("You cannot call `Reset` inside of the render loop!");
+            }
+            
             if (!IsInitialized)
             {
                 return;
@@ -166,6 +173,8 @@ namespace Silk.NET.Windowing.Internals
 
         public void DoRender()
         {
+            _inRenderLoop = true;
+
             DoInvokes();
             var delta = _renderStopwatch.Elapsed.TotalSeconds;
             if ((delta >= _renderPeriod) || VSync)
@@ -190,16 +199,20 @@ namespace Silk.NET.Windowing.Internals
                     GLContext?.SwapBuffers();
                 }
             }
+            
+            _inRenderLoop = false;
         }
 
         public void DoUpdate()
         {
+            _inRenderLoop = true;
             var delta = _updateStopwatch.Elapsed.TotalSeconds;
             if (delta >= _updatePeriod)
             {
                 _updateStopwatch.Restart();
                 Update?.Invoke(delta);
             }
+            _inRenderLoop = false;
         }
 
         // Misc properties
@@ -274,8 +287,16 @@ namespace Silk.NET.Windowing.Internals
         // Misc implementations
         void IView.DoEvents()
         {
+            _inRenderLoop = true;
             DoEvents();
             ProcessEvents?.Invoke();
+            AfterProcessingEvents();
+            _inRenderLoop = false;
+        }
+        
+        internal virtual void AfterProcessingEvents()
+        {
+            // used by sdl2 windows to clear events
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | (MethodImplOptions) 512)]

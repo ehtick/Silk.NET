@@ -9,9 +9,14 @@ using Silk.NET.Core.Attributes;
 
 namespace Silk.NET.OpenGLES
 {
+    [Flags]
     [NativeName("Name", "FragmentShaderColorModMaskATI")]
     public enum FragmentShaderColorModMaskATI : int
     {
+        [NativeName("Name", "")]
+        None = 0,
+        [NativeName("Name", "GL_2X_BIT_ATI")]
+        Gl2XBitAti = 0x1,
         [NativeName("Name", "GL_COMP_BIT_ATI")]
         CompBitAti = 0x2,
         [NativeName("Name", "GL_NEGATE_BIT_ATI")]

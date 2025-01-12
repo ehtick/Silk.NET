@@ -12,6 +12,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Utilities;
+using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.ProjectModel.ProjectModelTasks;
 
@@ -29,9 +30,12 @@ partial class Build
     )]
     readonly string[] Projects;
 
+    [Parameter("If specified, ignores any generated solution present and builds the entire project.", Name = "All")]
+    readonly bool BuildAll;
+
     Solution GeneratedSolution;
 
-    Solution Solution => GeneratedSolution ?? (File.Exists(RootDirectory / "Silk.NET.gen.sln")
+    Solution Solution => GeneratedSolution ?? (File.Exists(RootDirectory / "Silk.NET.gen.sln") && !BuildAll
         ? ParseSolution(RootDirectory / "Silk.NET.gen.sln")
         : OriginalSolution);
 
@@ -39,7 +43,7 @@ partial class Build
     {
         if (Projects is not { Length: > 0 })
         {
-            Logger.Trace("Nothing to do for GenerateSolution.");
+            Log.Verbose("Nothing to do for GenerateSolution.");
             return;
         }
 
@@ -98,7 +102,7 @@ partial class Build
 
         // make a new Solution object to prevent us mutating the OriginalSolution
         var genSln = ParseSolution(OriginalSolution.Path);
-        
+
         // remove irrelevant projects
         foreach (var project in genSln.GetProjects("*"))
         {
@@ -109,8 +113,8 @@ partial class Build
         }
 
         genSln.SaveAs(RootDirectory / "Silk.NET.gen.sln");
-        Logger.Info($"Generated solution containing {genSln.AllProjects.Count} projects");
+        Log.Information($"Generated solution containing {genSln.AllProjects.Count} projects");
     }
-    
+
     Target Sln => CommonTarget();
 }

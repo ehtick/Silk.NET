@@ -9,7 +9,7 @@ namespace Silk.NET.Input.Sdl
     internal partial class SdlKeyboard : IKeyboard, ISdlDevice
     {
         private readonly SdlInputContext _ctx;
-        private List<Key> _keysDown = new List<Key>();
+        private List<Scancode> _scancodesDown = new List<Scancode>();
 
         public SdlKeyboard(SdlInputContext ctx)
         {
@@ -27,7 +27,8 @@ namespace Silk.NET.Input.Sdl
             get => _ctx.Sdl.GetClipboardTextS();
             set => _ctx.Sdl.SetClipboardText(value);
         }
-        public bool IsKeyPressed(Key key) => _keysDown.Contains(key);
+        public bool IsKeyPressed(Key key) => _scancodesDown.Any(x => _keyMap.TryGetValue(x, out Key skey) && key == skey);
+        public bool IsScancodePressed(int scancode) => _scancodesDown.Contains((Scancode) scancode);
         public event Action<IKeyboard, Key, int>? KeyDown;
         public event Action<IKeyboard, Key, int>? KeyUp;
         public event Action<IKeyboard, char>? KeyChar;
@@ -40,20 +41,40 @@ namespace Silk.NET.Input.Sdl
             {
                 case EventType.Keydown:
                 {
-                    if (@event.Key.Repeat != 1 && _keyMap.TryGetValue((KeyCode) @event.Key.Keysym.Sym, out var key))
+                    if (@event.Key.Repeat != 1)
                     {
-                        _keysDown.Add(key);
-                        KeyDown?.Invoke(this, key, (int) @event.Key.Keysym.Scancode);
+                        Key keyDown;
+                        if (_keyMap.TryGetValue(@event.Key.Keysym.Scancode, out var key))
+                        {
+                            keyDown = key;
+                        }
+                        else
+                        {
+                            keyDown = Key.Unknown;
+                        }
+
+                        _scancodesDown.Add(@event.Key.Keysym.Scancode);
+                        KeyDown?.Invoke(this, keyDown, (int) @event.Key.Keysym.Scancode);
                     }
 
                     break;
                 }
                 case EventType.Keyup:
                 {
-                    if (@event.Key.Repeat != 1 && _keyMap.TryGetValue((KeyCode) @event.Key.Keysym.Sym, out var key))
+                    if (@event.Key.Repeat != 1)
                     {
-                        _keysDown.Remove(key);
-                        KeyUp?.Invoke(this, key, (int) @event.Key.Keysym.Scancode);
+                        Key keyUp;
+                        if (_keyMap.TryGetValue(@event.Key.Keysym.Scancode, out var key))
+                        {
+                            keyUp = key;
+                        }
+                        else
+                        {
+                            keyUp = Key.Unknown;
+                        }
+
+                        _scancodesDown.Remove(@event.Key.Keysym.Scancode);
+                        KeyUp?.Invoke(this, keyUp, (int) @event.Key.Keysym.Scancode);
                     }
 
                     break;

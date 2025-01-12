@@ -29,6 +29,7 @@ namespace D3D12Triangle
         private IWindow _window;
         private ILogger _logger;
         private ILoggerProvider _loggerProvider;
+        private DXGI _dxgi;
 
         protected DXSample(string name)
         {
@@ -75,6 +76,8 @@ namespace D3D12Triangle
 
         public ILogger Log => _logger;
 
+        public DXGI Dxgi => _dxgi;
+
         public void Dispose()
         {
             Dispose(isDisposing: true);
@@ -98,6 +101,7 @@ namespace D3D12Triangle
             bool useWarpDevice
         )
         {
+            _dxgi = DXGI.GetApi(window);
             _backBufferFormat = (backBufferFormat != Format.FormatUnknown)
                 ? backBufferFormat
                 : Format.FormatR8G8B8A8Unorm;
@@ -174,7 +178,7 @@ namespace D3D12Triangle
                 AdapterDesc1 desc;
                 _ = adapter->GetDesc1(&desc);
 
-                if ((desc.Flags & (uint) AdapterFlag.AdapterFlagSoftware) != 0)
+                if ((desc.Flags & (uint) AdapterFlag.Software) != 0)
                 {
                     // Don't select the Basic Render Driver adapter.
                     // If you want a software adapter, pass in "/warp" on the command line.

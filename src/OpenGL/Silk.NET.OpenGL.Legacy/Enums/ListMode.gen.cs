@@ -12,8 +12,10 @@ namespace Silk.NET.OpenGL.Legacy
     [NativeName("Name", "ListMode")]
     public enum ListMode : int
     {
+        [System.Obsolete("Deprecated in version 3.2")]
         [NativeName("Name", "GL_COMPILE")]
         Compile = 0x1300,
+        [System.Obsolete("Deprecated in version 3.2")]
         [NativeName("Name", "GL_COMPILE_AND_EXECUTE")]
         CompileAndExecute = 0x1301,
     }

@@ -11,7 +11,6 @@ using System.Linq;
 using System.Xml.Linq;
 using Humanizer;
 using Microsoft.CodeAnalysis.CSharp;
-using MoreLinq.Extensions;
 using Silk.NET.BuildTools.Common;
 using Silk.NET.BuildTools.Common.Enums;
 using Silk.NET.BuildTools.Common.Functions;
@@ -113,7 +112,7 @@ namespace Silk.NET.BuildTools.Converters.Readers
                                 ))
                         )
                     )
-                    .ToDictionary();
+                    .ToDictionary(x => x.y, x => x.Item2);
 
                 Debug.Assert(removals != null, $"{nameof(removals) != null}");
 
@@ -169,7 +168,7 @@ namespace Silk.NET.BuildTools.Converters.Readers
                                                 ), task.FunctionPrefix
                                         ),
                                     NativeName = function,
-                                    Parameters = ParseParameters(xf),
+                                    Parameters = ParseParameters(xf, task.IntAsPtr),
                                     ProfileName = name,
                                     ProfileVersion = apiVersion,
                                     ReturnType = ParseTypeSignature
@@ -442,14 +441,14 @@ namespace Silk.NET.BuildTools.Converters.Readers
                     valueReferenceExpression = new string(expression);
 
                     hasValueReference = true;
-                    return new Count(valueReferenceName);
+                    return new Count(valueReferenceName) { Expression = valueReferenceExpression };
                 }
             }
             
             throw new InvalidDataException("No valid count could be parsed from the input.");
         }
         
-        private static List<Parameter> ParseParameters(XElement functionElement)
+        private static List<Parameter> ParseParameters(XElement functionElement, Dictionary<string, string[]>? intAsPtr)
         {
             var parameterElements = functionElement.Elements().Where(e => e.Name == "param");
             var parametersWithComputedCounts =
@@ -470,6 +469,16 @@ namespace Silk.NET.BuildTools.Converters.Readers
                     out var valueReferenceName,
                     out _
                 );
+
+                if ((intAsPtr?.TryGetValue(
+                        functionElement.Attribute("name")!.Value,
+                        out var intAsPtrParams
+                    ) ?? false) &&
+                    intAsPtrParams.Contains(parameter.Name)
+                )
+                {
+                    parameter.Type.IsIntAsPtr = true;
+                }
 
                 if (hasComputedCount)
                 {
@@ -740,7 +749,7 @@ namespace Silk.NET.BuildTools.Converters.Readers
                             ))
                     )
                 )
-                .ToDictionary();
+                .ToDictionary(x => x.y, x => x.Item2);
 
             var revivals = new Dictionary<string, Version>();
             foreach (var api in apis)
@@ -850,12 +859,17 @@ namespace Silk.NET.BuildTools.Converters.Readers
                         (
                             new Token
                             {
-                                Attributes = removals.ContainsKey(@enum.Key) && !revivals.ContainsKey(@enum.Key)
+                                Attributes = removals.TryGetValue(@enum.Key, out var ver) &&
+                                             !revivals.ContainsKey(@enum.Key)
                                     ? new List<Attribute>
                                     {
                                         new Attribute
                                         {
-                                            Name = "System.Obsolete"
+                                            Name = "System.Obsolete",
+                                            Arguments = new List<string>
+                                            {
+                                                $"\"Deprecated in version {ver?.ToString(2)}\""
+                                            }
                                         }
                                     }
                                     : new List<Attribute>(),
@@ -876,12 +890,17 @@ namespace Silk.NET.BuildTools.Converters.Readers
                             {
                                 new Token
                                 {
-                                    Attributes = removals.ContainsKey(@enum.Key) && !revivals.ContainsKey(@enum.Key)
+                                    Attributes = removals.TryGetValue(@enum.Key, out var ver) &&
+                                                 !revivals.ContainsKey(@enum.Key)
                                         ? new List<Attribute>
                                         {
                                             new Attribute
                                             {
-                                                Name = "System.Obsolete"
+                                                Name = "System.Obsolete",
+                                                Arguments = new List<string>
+                                                {
+                                                    $"\"Deprecated in version {ver?.ToString(2)}\""
+                                                }
                                             }
                                         }
                                         : new List<Attribute>(),

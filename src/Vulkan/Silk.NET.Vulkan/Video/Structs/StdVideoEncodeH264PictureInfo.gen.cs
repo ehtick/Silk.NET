@@ -22,11 +22,14 @@ namespace Silk.NET.Vulkan.Video
         public StdVideoEncodeH264PictureInfo
         (
             StdVideoEncodeH264PictureInfoFlags? flags = null,
-            StdVideoH264PictureType? pictureType = null,
+            byte? seqParameterSetId = null,
+            byte? picParameterSetId = null,
+            ushort? idrPicId = null,
+            StdVideoH264PictureType? primaryPicType = null,
             uint? frameNum = null,
-            uint? pictureOrderCount = null,
-            ushort? longTermPicNum = null,
-            ushort? longTermFrameIdx = null
+            int? picOrderCnt = null,
+            byte? temporalId = null,
+            StdVideoEncodeH264ReferenceListsInfo* pRefLists = null
         ) : this()
         {
             if (flags is not null)
@@ -34,9 +37,24 @@ namespace Silk.NET.Vulkan.Video
                 Flags = flags.Value;
             }
 
-            if (pictureType is not null)
+            if (seqParameterSetId is not null)
             {
-                PictureType = pictureType.Value;
+                SeqParameterSetId = seqParameterSetId.Value;
+            }
+
+            if (picParameterSetId is not null)
+            {
+                PicParameterSetId = picParameterSetId.Value;
+            }
+
+            if (idrPicId is not null)
+            {
+                IdrPicId = idrPicId.Value;
+            }
+
+            if (primaryPicType is not null)
+            {
+                PrimaryPicType = primaryPicType.Value;
             }
 
             if (frameNum is not null)
@@ -44,19 +62,19 @@ namespace Silk.NET.Vulkan.Video
                 FrameNum = frameNum.Value;
             }
 
-            if (pictureOrderCount is not null)
+            if (picOrderCnt is not null)
             {
-                PictureOrderCount = pictureOrderCount.Value;
+                PicOrderCnt = picOrderCnt.Value;
             }
 
-            if (longTermPicNum is not null)
+            if (temporalId is not null)
             {
-                LongTermPicNum = longTermPicNum.Value;
+                TemporalId = temporalId.Value;
             }
 
-            if (longTermFrameIdx is not null)
+            if (pRefLists is not null)
             {
-                LongTermFrameIdx = longTermFrameIdx.Value;
+                PRefLists = pRefLists;
             }
         }
 
@@ -66,29 +84,48 @@ namespace Silk.NET.Vulkan.Video
         [NativeName("Name", "flags")]
         public StdVideoEncodeH264PictureInfoFlags Flags;
 
+        [NativeName("Type", "uint8_t")]
+        [NativeName("Type.Name", "uint8_t")]
+        [NativeName("Name", "seq_parameter_set_id")]
+        public byte SeqParameterSetId;
+
+        [NativeName("Type", "uint8_t")]
+        [NativeName("Type.Name", "uint8_t")]
+        [NativeName("Name", "pic_parameter_set_id")]
+        public byte PicParameterSetId;
+
+        [NativeName("Type", "uint16_t")]
+        [NativeName("Type.Name", "uint16_t")]
+        [NativeName("Name", "idr_pic_id")]
+        public ushort IdrPicId;
+
         [NativeName("Type", "StdVideoH264PictureType")]
         [NativeName("Type.Name", "StdVideoH264PictureType")]
-        [NativeName("Name", "pictureType")]
-        public StdVideoH264PictureType PictureType;
+        [NativeName("Name", "primary_pic_type")]
+        public StdVideoH264PictureType PrimaryPicType;
 
         [NativeName("Type", "uint32_t")]
         [NativeName("Type.Name", "uint32_t")]
-        [NativeName("Name", "frameNum")]
+        [NativeName("Name", "frame_num")]
         public uint FrameNum;
 
-        [NativeName("Type", "uint32_t")]
-        [NativeName("Type.Name", "uint32_t")]
-        [NativeName("Name", "pictureOrderCount")]
-        public uint PictureOrderCount;
+        [NativeName("Type", "int32_t")]
+        [NativeName("Type.Name", "int32_t")]
+        [NativeName("Name", "PicOrderCnt")]
+        public int PicOrderCnt;
 
-        [NativeName("Type", "uint16_t")]
-        [NativeName("Type.Name", "uint16_t")]
-        [NativeName("Name", "long_term_pic_num")]
-        public ushort LongTermPicNum;
+        [NativeName("Type", "uint8_t")]
+        [NativeName("Type.Name", "uint8_t")]
+        [NativeName("Name", "temporal_id")]
+        public byte TemporalId;
+        [NativeName("Type", "uint8_t[3]")]
+        [NativeName("Type.Name", "uint8_t[3]")]
+        [NativeName("Name", "reserved1")]
+        public fixed byte Reserved1[3];
 
-        [NativeName("Type", "uint16_t")]
-        [NativeName("Type.Name", "uint16_t")]
-        [NativeName("Name", "long_term_frame_idx")]
-        public ushort LongTermFrameIdx;
+        [NativeName("Type", "const StdVideoEncodeH264ReferenceListsInfo *")]
+        [NativeName("Type.Name", "const StdVideoEncodeH264ReferenceListsInfo *")]
+        [NativeName("Name", "pRefLists")]
+        public StdVideoEncodeH264ReferenceListsInfo* PRefLists;
     }
 }

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // Copyright © Tanner Gooding and Contributors. Licensed under the MIT License (MIT). See License.md in the repository root for more information.
 
@@ -30,10 +30,9 @@ namespace D3D12Triangle
         private ID3D12CommandQueue* _commandQueue;
         private ID3D12CommandAllocator*[] _commandAllocators;
         private Viewport _viewport;
-        private Rectangle<int> _scissorRect;
+        private Box2D<int> _scissorRect;
         private uint _rtvDescriptorSize;
         private Silk.NET.Direct3D12.D3D12 _d3d12;
-        private Silk.NET.DXGI.DXGI _dxgi;
 
         private ID3D12Fence* _fence;
         private ulong[] _fenceValues;
@@ -56,12 +55,9 @@ namespace D3D12Triangle
             _fenceValues = new ulong[2];
             _graphicsCommandLists = new ID3D12GraphicsCommandList*[2];
             _d3d12 = Silk.NET.Direct3D12.D3D12.GetApi();
-            _dxgi = DXGI.GetApi();
         }
 
         public Silk.NET.Direct3D12.D3D12 D3D12 => _d3d12;
-
-        public Silk.NET.DXGI.DXGI Dxgi => _dxgi;
 
         public ID3D12CommandAllocator* CommandAllocator => _commandAllocators[FrameIndex];
 
@@ -95,7 +91,7 @@ namespace D3D12Triangle
 
         public ID3D12DescriptorHeap* RTVHeap => _rtvHeap;
 
-        public ref Rectangle<int> ScissorRect => ref _scissorRect;
+        public ref Box2D<int> ScissorRect => ref _scissorRect;
 
         public IDXGISwapChain3* SwapChain => _swapChain;
 
@@ -140,7 +136,7 @@ namespace D3D12Triangle
                 GraphicsCommandList->ClearRenderTargetView(rtvHandle, (float*) &backgroundColor, 0, null);
 
                 var dsvHandle = DSVHeap->GetCPUDescriptorHandleForHeapStart();
-                GraphicsCommandList->ClearDepthStencilView(dsvHandle, ClearFlags.ClearFlagDepth, 1, 0, 0, null);
+                GraphicsCommandList->ClearDepthStencilView(dsvHandle, ClearFlags.Depth, 1, 0, 0, null);
 
                 GraphicsCommandList->OMSetRenderTargets(1, &rtvHandle, 0, &dsvHandle);
 
@@ -162,11 +158,11 @@ namespace D3D12Triangle
         {
             ID3D12Resource* depthStencil;
 
-            var heapProperties = new HeapProperties(HeapType.HeapTypeDefault);
+            var heapProperties = new HeapProperties(HeapType.Default);
 
             var resourceDesc = new ResourceDesc
             (
-                ResourceDimension.ResourceDimensionTexture2D,
+                ResourceDimension.Texture2D,
                 0ul,
                 (ulong) Size.X,
                 (uint) Size.Y,
@@ -174,8 +170,8 @@ namespace D3D12Triangle
                 1,
                 DepthBufferFormat,
                 new SampleDesc() {Count = 1, Quality = 0},
-                TextureLayout.TextureLayoutUnknown,
-                ResourceFlags.ResourceFlagAllowDepthStencil
+                TextureLayout.LayoutUnknown,
+                ResourceFlags.AllowDepthStencil
             );
 
             var clearValue = new ClearValue(DepthBufferFormat, depthStencil: new DepthStencilValue(1.0f, 0));
@@ -185,7 +181,7 @@ namespace D3D12Triangle
             (
                 D3DDevice->CreateCommittedResource
                 (
-                    &heapProperties, HeapFlags.HeapFlagNone, &resourceDesc, ResourceStates.ResourceStateDepthWrite,
+                    &heapProperties, HeapFlags.None, &resourceDesc, ResourceStates.DepthWrite,
                     &clearValue, &iid, (void**) &depthStencil
                 )
             );
@@ -193,7 +189,7 @@ namespace D3D12Triangle
             var dsvDesc = new DepthStencilViewDesc
             {
                 Format = DepthBufferFormat,
-                ViewDimension = DsvDimension.DsvDimensionTexture2D
+                ViewDimension = DsvDimension.Texture2D
             };
             D3DDevice->CreateDepthStencilView(depthStencil, &dsvDesc, DSVHeap->GetCPUDescriptorHandleForHeapStart());
 
@@ -210,7 +206,7 @@ namespace D3D12Triangle
                 var dsvHeapDesc = new DescriptorHeapDesc
                 {
                     NumDescriptors = 1,
-                    Type = DescriptorHeapType.DescriptorHeapTypeDsv,
+                    Type = DescriptorHeapType.Dsv,
                 };
 
                 ID3D12DescriptorHeap* dsvHeap;
@@ -226,7 +222,7 @@ namespace D3D12Triangle
                 var rtvHeapDesc = new DescriptorHeapDesc
                 {
                     NumDescriptors = FrameCount,
-                    Type = DescriptorHeapType.DescriptorHeapTypeRtv,
+                    Type = DescriptorHeapType.Rtv,
                 };
 
                 ID3D12DescriptorHeap* rtvHeap;
@@ -235,7 +231,7 @@ namespace D3D12Triangle
                 SilkMarshal.ThrowHResult(D3DDevice->CreateDescriptorHeap(&rtvHeapDesc, &iid, (void**) &rtvHeap));
 
                 rtvDescriptorSize = D3DDevice->GetDescriptorHandleIncrementSize
-                    (DescriptorHeapType.DescriptorHeapTypeRtv);
+                    (DescriptorHeapType.Rtv);
                 return rtvHeap;
             }
         }
@@ -276,7 +272,7 @@ namespace D3D12Triangle
                 SilkMarshal.ThrowHResult
                 (
                     D3DDevice->CreateCommandAllocator
-                        (CommandListType.CommandListTypeDirect, &iid, (void**) &commandAllocator)
+                        (CommandListType.Direct, &iid, (void**) &commandAllocator)
                 );
 
                 return commandAllocator;
@@ -302,7 +298,7 @@ namespace D3D12Triangle
                 SilkMarshal.ThrowHResult
                 (
                     D3D12.CreateDevice
-                        ((IUnknown*) _dxgiAdapter, D3DFeatureLevel.D3DFeatureLevel110, &iid, (void**) &d3dDevice)
+                        ((IUnknown*) _dxgiAdapter, D3DFeatureLevel.Level110, &iid, (void**) &d3dDevice)
                 );
 
                 return d3dDevice;
@@ -326,7 +322,7 @@ namespace D3D12Triangle
 
                 var iid = ID3D12Fence.Guid;
                 SilkMarshal.ThrowHResult
-                    (D3DDevice->CreateFence(InitialValue: 0, FenceFlags.FenceFlagNone, &iid, (void**) &fence));
+                    (D3DDevice->CreateFence(InitialValue: 0, FenceFlags.None, &iid, (void**) &fence));
 
                 return fence;
             }
@@ -364,7 +360,7 @@ namespace D3D12Triangle
                     (
                         D3DDevice->CreateCommandList
                         (
-                            nodeMask: 0, CommandListType.CommandListTypeDirect, _commandAllocators[i], PipelineState,
+                            nodeMask: 0, CommandListType.Direct, _commandAllocators[i], PipelineState,
                             &iid, (void**) &graphicsCommandList
                         )
                     );
@@ -468,27 +464,27 @@ namespace D3D12Triangle
                                 var str = $"{msg.Category.ToString()["MessageCategory".Length..]} (From D3D12): {desc}";
                                 switch (msg.Severity)
                                 {
-                                    case MessageSeverity.MessageSeverityCorruption:
+                                    case MessageSeverity.Corruption:
                                     {
                                         Log.LogCritical(eid, str);
                                         break;
                                     }
-                                    case MessageSeverity.MessageSeverityError:
+                                    case MessageSeverity.Error:
                                     {
                                         Log.LogError(eid, str);
                                         break;
                                     }
-                                    case MessageSeverity.MessageSeverityWarning:
+                                    case MessageSeverity.Warning:
                                     {
                                         Log.LogWarning(eid, str);
                                         break;
                                     }
-                                    case MessageSeverity.MessageSeverityInfo:
+                                    case MessageSeverity.Info:
                                     {
                                         Log.LogInformation(eid, str);
                                         break;
                                     }
-                                    case MessageSeverity.MessageSeverityMessage:
+                                    case MessageSeverity.Message:
                                     {
                                         Log.LogTrace(eid, str);
                                         break;
@@ -595,7 +591,7 @@ namespace D3D12Triangle
                     Height = (uint) Size.Y,
                     Format = BackBufferFormat,
                     BufferUsage = DXGI.UsageRenderTargetOutput,
-                    SwapEffect = SwapEffect.SwapEffectFlipDiscard,
+                    SwapEffect = SwapEffect.FlipDiscard,
                     SampleDesc = new(1, 0),
                 };
 
@@ -849,7 +845,7 @@ namespace D3D12Triangle
                 GraphicsCommandList->RSSetViewports(1, viewport);
             }
 
-            fixed (Rectangle<int>* scissorRect = &ScissorRect)
+            fixed (Box2D<int>* scissorRect = &ScissorRect)
             {
                 GraphicsCommandList->RSSetScissorRects(1, scissorRect);
             }
@@ -861,12 +857,12 @@ namespace D3D12Triangle
             ResourceStates stateBefore,
             ResourceStates stateAfter,
             uint subresource = D3D12.ResourceBarrierAllSubresources,
-            ResourceBarrierFlags flags = ResourceBarrierFlags.ResourceBarrierFlagNone
+            ResourceBarrierFlags flags = ResourceBarrierFlags.None
         )
         {
             // TODO THIS IS A D3DX12 FUNCTION
             ResourceBarrier result = default;
-            result.Type = ResourceBarrierType.ResourceBarrierTypeTransition;
+            result.Type = ResourceBarrierType.Transition;
             result.Flags = flags;
             result.Anonymous.Transition.PResource = pResource;
             result.Anonymous.Transition.StateBefore = stateBefore;
@@ -878,14 +874,14 @@ namespace D3D12Triangle
         protected virtual void TransitionForRender()
         {
             var barrier = InitTransition
-                (RenderTarget, ResourceStates.ResourceStatePresent, ResourceStates.ResourceStateRenderTarget);
+                (RenderTarget, ResourceStates.Present, ResourceStates.RenderTarget);
             GraphicsCommandList->ResourceBarrier(1, &barrier);
         }
 
         protected virtual void TransitionForPresent()
         {
             var barrier = InitTransition
-                (RenderTarget, ResourceStates.ResourceStateRenderTarget, ResourceStates.ResourceStatePresent);
+                (RenderTarget, ResourceStates.RenderTarget, ResourceStates.Present);
             GraphicsCommandList->ResourceBarrier(1, &barrier);
         }
 
@@ -893,7 +889,7 @@ namespace D3D12Triangle
         {
             var iid = ID3D12Device.Guid;
             return HResult.IndicatesSuccess
-                (D3D12.CreateDevice((IUnknown*) adapter, D3DFeatureLevel.D3DFeatureLevel110, &iid, null));
+                (D3D12.CreateDevice((IUnknown*) adapter, D3DFeatureLevel.Level110, &iid, null));
         }
 
         private void ExecuteGraphicsCommandList()

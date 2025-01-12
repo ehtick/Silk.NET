@@ -34,9 +34,10 @@ namespace Silk.NET.Windowing.Sdl
         (
             () =>
             {
+                SDL.Sdl? api = null;
                 try
                 {
-                    SDL.Sdl.GetApi();
+                    api = SDL.Sdl.GetApi();
                 }
                 catch (Exception ex)
                 {
@@ -44,6 +45,10 @@ namespace Silk.NET.Windowing.Sdl
                     Console.WriteLine($"Can't load SDL: {ex}");
 #endif
                     return false;
+                }
+                finally
+                {
+                    api?.Dispose();
                 }
 
                 return true;
@@ -66,6 +71,8 @@ namespace Silk.NET.Windowing.Sdl
             return (SdlWindow)(_view = new SdlWindow(opts, null, null, this));
         }
 
+        string Name => nameof(SdlPlatform);
+
         public bool IsViewOnly => IsApplicable && SdlProvider.UninitializedSDL.Value.GetPlatformS() switch
         {
             "Windows" => false,
@@ -75,7 +82,7 @@ namespace Silk.NET.Windowing.Sdl
         };
 
         public bool IsApplicable => _isApplicable.Value;
-        public event Action<IEnumerable<Event>>? EventReceived;
+        public event Action<List<Event>>? EventReceived;
 
         public IView GetView(ViewOptions? opts = null)
         {

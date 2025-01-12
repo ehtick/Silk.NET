@@ -2,7 +2,6 @@ using Silk.NET.Input;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using System;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using Silk.NET.Maths;
@@ -14,9 +13,6 @@ namespace Tutorial
         private static IWindow window;
         private static GL Gl;
         private static IKeyboard primaryKeyboard;
-
-        private const int Width = 800;
-        private const int Height = 700;
 
         private static BufferObject<float> Vbo;
         private static BufferObject<uint> Ebo;
@@ -95,9 +91,12 @@ namespace Tutorial
             window.Load += OnLoad;
             window.Update += OnUpdate;
             window.Render += OnRender;
+            window.FramebufferResize += OnFramebufferResize;
             window.Closing += OnClose;
 
             window.Run();
+
+            window.Dispose();
         }
 
         private static void OnLoad()
@@ -131,7 +130,8 @@ namespace Tutorial
             LampShader = new Shader(Gl, "shader.vert", "shader.frag");
 
             //Start a camera at position 3 on the Z axis, looking at position -1 on the Z axis
-            Camera = new Camera(Vector3.UnitZ * 6, Vector3.UnitZ * -1, Vector3.UnitY, Width / Height);
+            var size = window.FramebufferSize;
+            Camera = new Camera(Vector3.UnitZ * 6, Vector3.UnitZ * -1, Vector3.UnitY, (float)size.X / size.Y);
         }
 
         private static unsafe void OnUpdate(double deltaTime)
@@ -208,6 +208,12 @@ namespace Tutorial
             LampShader.SetUniform("uProjection", Camera.GetProjectionMatrix());
 
             Gl.DrawArrays(PrimitiveType.Triangles, 0, 36);
+        }
+
+        private static void OnFramebufferResize(Vector2D<int> newSize)
+        {
+            Gl.Viewport(newSize);
+            Camera.AspectRatio = (float)newSize.X / newSize.Y;
         }
 
         private static unsafe void OnMouseMove(IMouse mouse, Vector2 position)

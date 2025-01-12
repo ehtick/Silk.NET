@@ -12,10 +12,10 @@ partial class Build
     (
         x => x.DependsOn(Restore)
             .After(Clean, RegenerateBindings, BuildLibSilkDroid)
-            .Produces("build/output_packages/*.nupkg")
+            .Produces("build/output_packages/*.nupkg", "build/output_packages/*.snupkg")
             .Executes
             (
-                () => DotNetPack
+                () => ErrorsOnly<DotNetPackSettings>
                 (
                     s => s.SetProject(Solution)
                         .SetConfiguration(Configuration)

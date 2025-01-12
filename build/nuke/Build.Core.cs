@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Nuke.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
+using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tooling.ProcessTasks;
@@ -48,16 +49,16 @@ partial class Build
 
                     if (Native)
                     {
-                        var silkDroid = SourceDirectory / "Windowing" / "SilkDroid";
-                        using var process = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                            ? StartProcess("bash", "-c \"./gradlew clean\"", silkDroid)
-                            : StartProcess("cmd", "/c \".\\gradlew clean\"", silkDroid);
-                        process.AssertZeroExitCode();
-                        outputs = outputs.Concat(process.Output);
+                        outputs = outputs.Concat
+                        (
+                            StartShell($".{Path.PathSeparator}gradlew clean", SourceDirectory / "Windowing" / "SilkDroid")
+                                .AssertZeroExitCode()
+                                .Output
+                        );
                     }
                     else
                     {
-                        Logger.Warn("Skipping gradlew clean as the \"native\" feature-set has not been specified.");
+                        Log.Warning("Skipping gradlew clean as the \"native\" feature-set has not been specified.");
                     }
 
                     return outputs;
@@ -84,7 +85,7 @@ partial class Build
             .After(Clean)
             .Executes
             (
-                () => DotNetBuild
+                () => ErrorsOnly<DotNetBuildSettings>
                 (
                     s => s.SetProjectFile(Solution)
                         .SetConfiguration(Configuration)
