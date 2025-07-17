@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <Project>
 
   <!--
@@ -26,15 +26,9 @@
     </InternalsVisibleTo>
   </ItemDefinitionGroup>
 
-  <Target Name="GenerateInternalsVisibleTo"
-          BeforeTargets="CoreCompile"
-          DependsOnTargets="PrepareForBuild;CoreGenerateInternalsVisibleTo"
-          Condition="'@(InternalsVisibleTo)' != ''" />
+  <Target Name="GenerateInternalsVisibleTo" BeforeTargets="CoreCompile" DependsOnTargets="PrepareForBuild;CoreGenerateInternalsVisibleTo" Condition="'@(InternalsVisibleTo)' != ''" />
 
-  <Target Name="CoreGenerateInternalsVisibleTo"
-          Condition="'$(Language)' == 'VB' or '$(Language)' == 'C#'"
-          Inputs="$(MSBuildAllProjects)"
-          Outputs="$(GeneratedInternalsVisibleToFile)">
+  <Target Name="CoreGenerateInternalsVisibleTo" Condition="'$(Language)' == 'VB' or '$(Language)' == 'C#'" Inputs="$(MSBuildAllProjects)" Outputs="$(GeneratedInternalsVisibleToFile)">
     <CreateItem Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute" AdditionalMetadata="_Parameter1=%(InternalsVisibleTo.Identity)" Condition="'%(InternalsVisibleTo.PublicKey)' == ''">
       <Output TaskParameter="Include" ItemName="InternalsVisibleToAttribute" />
     </CreateItem>

@@ -20,10 +20,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     Targets that generate Compile items are also expected to run before
     BeforeCompile targets (common targets convention).
    -->
-  <Target Name="GenerateSilkGlobalUsings"
-          BeforeTargets="BeforeCompile;CoreCompile"
-          AfterTargets="PrepareForBuild;GenerateGlobalUsings"
-          Condition="'$(ImplicitUsings)' == 'true' Or '$(ImplicitUsings)' == 'enable'">
+  <Target Name="GenerateSilkGlobalUsings" BeforeTargets="BeforeCompile;CoreCompile" AfterTargets="PrepareForBuild;GenerateGlobalUsings" Condition="'$(ImplicitUsings)' == 'true' Or '$(ImplicitUsings)' == 'enable'">
     <PropertyGroup>
       <SilkGlobalUsingsSource Condition="'$(SilkGlobalUsingsSource)' ==''">$(MSBuildThisFileDirectory)Silk.NET.Core$(DefaultLanguageSourceExtension)</SilkGlobalUsingsSource>
       <SilkGeneratedGlobalUsingsFile Condition="'$(SilkGeneratedGlobalUsingsFile)' ==''">$(IntermediateOutputPath)$(MSBuildProjectName).SilkDSL.g$(DefaultLanguageSourceExtension)</SilkGeneratedGlobalUsingsFile>
