@@ -7,10 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.13.11" />
+      <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
       <ProjectReference Include="..\..\..\sources\Maths\Silk.NET.Maths.csproj" />
     </ItemGroup>
 
